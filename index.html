@@ -104,6 +104,7 @@ input:focus,textarea:focus{outline:0;border-color:var(--p2);box-shadow:0 0 0 5px
 textarea{min-height:96px;resize:vertical}
 .stack{display:grid;gap:14px;text-align:left}
 .stack label{font-size:13px;font-weight:600;color:var(--muted)}
+.lbl{text-align:left;font-size:13px;font-weight:600;color:var(--muted);margin:16px 0 10px}
 .err{min-height:20px;margin-top:12px;font-size:14px;font-weight:600;color:#d1195a}
 .shake{animation:shake .4s}
 @keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
@@ -141,6 +142,37 @@ input[type=date],input[type=time]{-webkit-appearance:none;appearance:none;min-wi
 }
 @media (max-width:360px){h1{font-size:24px}.chip{flex-basis:100%}}
 
+/* ===== Nâng cấp thu hút ===== */
+@property --a{syntax:'<angle>';initial-value:0deg;inherits:false}
+@keyframes rot{to{--a:360deg}}
+.glass{position:relative}
+.glass::before{content:"";position:absolute;inset:-2px;border-radius:34px;padding:2px;pointer-events:none;
+background:conic-gradient(from var(--a),#ff4f95,#ffe0ee,#ff9a6c,#ffb3d3,#ff4f95);
+-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;
+animation:rot 6s linear infinite;opacity:.95}
+.glass::after{content:"";position:absolute;inset:0;border-radius:32px;pointer-events:none;
+background:linear-gradient(160deg,#ffffff90 0%,#ffffff00 40%)}
+.glass>*{position:relative;z-index:1}
+.orb{position:absolute;left:50%;top:50%;width:22px;height:22px;margin:-11px 0 0 -11px;font-style:normal;font-size:18px;
+display:grid;place-items:center;animation:orbit 12s linear infinite;filter:drop-shadow(0 3px 6px #ff4f9566)}
+@keyframes orbit{from{transform:rotate(0) translateX(66px) rotate(0)}to{transform:rotate(360deg) translateX(66px) rotate(-360deg)}}
+.hero{width:140px;height:140px}.hero b{font-size:72px}
+.tag::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--p1);margin-right:8px;animation:blink 1.4s infinite}
+@keyframes blink{50%{opacity:.25;transform:scale(.7)}}
+#st0 h1{font-size:clamp(32px,9vw,46px);line-height:1.15}
+.arr{display:inline-block;margin-left:4px;animation:nudge 1.2s ease-in-out infinite}
+@keyframes nudge{50%{transform:translateX(6px)}}
+.star{position:absolute;font-style:normal;pointer-events:none;color:#fff;animation:tw 3s ease-in-out infinite;text-shadow:0 0 10px #fff,0 0 20px #ff8cbc}
+@keyframes tw{0%,100%{opacity:.1;transform:scale(.6)}50%{opacity:1;transform:scale(1.2) rotate(20deg)}}
+.chip:hover{box-shadow:0 12px 24px -6px #ff4f9560;border-color:#ffb3d1}
+.sub{font-weight:500}
+@media (max-width:600px){
+  #st0 h1{font-size:33px}
+  .hero{width:120px;height:120px}.hero b{font-size:60px}
+  @keyframes orbit{from{transform:rotate(0) translateX(60px) rotate(0)}to{transform:rotate(360deg) translateX(60px) rotate(-360deg)}}
+  .glass::before{border-radius:28px}.glass::after{border-radius:26px}
+}
+
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition:none!important}.chip,h1 .w{opacity:1}}
 </style>
 </head>
@@ -155,81 +187,96 @@ input[type=date],input[type=time]{-webkit-appearance:none;appearance:none;min-wi
   <!-- 0: Mở đầu -->
   <section class="step on" id="st0">
     <div class="glass tilt">
-      <div class="hero"><b>🧸</b></div>
+      <div class="hero"><b>🧸</b><i class="orb" style="animation-delay:0s">💗</i><i class="orb" style="animation-delay:-3s">✨</i><i class="orb" style="animation-delay:-6s">🌸</i><i class="orb" style="animation-delay:-9s">🎀</i></div>
       <span class="tag">Có plan mới</span>
       <h1 id="title"></h1>
       <p class="sub">Xem thử rồi chọn giúp anh nha.</p>
-      <button class="btn pulse" id="start">Đi thôi!</button>
+      <button class="btn pulse" id="start">Đi thôi! <span class="arr">→</span></button>
     </div>
   </section>
 
-  <!-- 1: Ngày giờ -->
+  <!-- 1: Ngày + buổi -->
   <section class="step" id="st1">
     <div class="glass tilt">
-      <span class="tag">1 / 4</span>
+      <span class="tag" data-tag></span>
       <h1>Khi nào <span class="grad">Su rảnh?</span></h1>
-      <p class="sub">Chọn ngày và giờ thuận tiện nhất.</p>
+      <p class="sub">Chọn ngày mình đi chơi nhé.</p>
       <div class="field">
-        <label>Ngày<input type="date" id="date"></label>
-        <label>Giờ<input type="time" id="time" value="18:00"></label>
+        <label>Ngày<input type="date" id="date" value="2026-11-08"></label>
       </div>
-      <div class="err" id="e1"></div>
-      <div class="nav"><button class="btn ghost" data-go="0">←</button><button class="btn" data-next="1">Tiếp tục</button></div>
+      <div class="err"></div>
+      <div class="nav"><button class="btn ghost" data-back>←</button><button class="btn" data-next>Tiếp tục</button></div>
     </div>
   </section>
 
-  <!-- 2: Địa điểm -->
-  <section class="step" id="st2">
+  <!-- Sáng -->
+  <section class="step" id="stSang">
     <div class="glass tilt">
-      <span class="tag">2 / 4</span>
-      <h1>Mình <span class="grad">đi đâu</span> nè?</h1>
-      <p class="sub">Chọn nhiều chỗ cũng được.</p>
-      <div class="chips" data-key="place">
-        <button class="chip">☕ Cà phê</button><button class="chip">🎬 Xem phim</button>
-        <button class="chip">🌳 Dạo công viên</button>
-        <button class="chip">🎡 Khu vui chơi</button><button class="chip">🏞️ Đi Huế dạo phố</button>
-        <button class="chip">📚 Cà phê Su học bài</button><button class="chip">💁 Chỗ Su hay đi</button>
+      <span class="tag" data-tag></span>
+      <h1>Buổi <span class="grad">sáng</span> làm gì nè?</h1>
+      <p class="sub">Chọn nhiều cũng được.</p>
+      <div class="chips" data-key="sang">
+        <button class="chip">🥖 Ăn sáng</button><button class="chip">☕ Uống cà phê</button>
+        <button class="chip">📚 Cà phê Su học bài</button><button class="chip">🌳 Đi dạo</button>
+        <button class="chip">🧋 Trà sữa</button><button class="chip">💁 Chỗ Su hay đi</button>
+        
       </div>
-      <div class="count" id="c-place"></div>
-      <div class="err" id="e2"></div>
-      <div class="nav"><button class="btn ghost" data-go="1">←</button><button class="btn" data-next="2">Tiếp tục</button></div>
+      <div class="err"></div>
+      <div class="nav"><button class="btn ghost" data-back>←</button><button class="btn" data-next>Tiếp tục</button></div>
     </div>
   </section>
 
-  <!-- 3: Ăn gì -->
-  <section class="step" id="st3">
+  <!-- Trưa -->
+  <section class="step" id="stTrua">
     <div class="glass tilt">
-      <span class="tag">3 / 4</span>
-      <h1>Ăn <span class="grad">gì</span> nè?</h1>
+      <span class="tag" data-tag></span>
+      <h1>Buổi <span class="grad">trưa</span> ăn gì nè?</h1>
       <p class="sub">Su thích món nào thì chọn nhé.</p>
-      <div class="chips" data-key="food">
+      <div class="chips" data-key="trua">
         <button class="chip">🍲 Lẩu</button><button class="chip">🍖 Nướng</button>
-        <button class="chip">🍜 Bún bò</button><button class="chip">🍽️ Đồ ăn Su chọn</button>
-        <button class="chip">🧋 Trà sữa</button><button class="chip">🍣 Đồ Nhật</button>
-        <button class="chip">🍕 Pizza</button>
+        <button class="chip">🍜 Bún bò</button><button class="chip">🍚 Cơm</button>
+        <button class="chip">🍣 Đồ Nhật</button>
+        <button class="chip">🍽️ Ăn theo Su chọn</button>
       </div>
-      <div class="count" id="c-food"></div>
-      <div class="nav"><button class="btn ghost" data-go="2">←</button><button class="btn" data-next="3">Tiếp tục</button></div>
+      <div class="err"></div>
+      <div class="nav"><button class="btn ghost" data-back>←</button><button class="btn" data-next>Tiếp tục</button></div>
     </div>
   </section>
 
-  <!-- 4: Lời nhắn -->
-  <section class="step" id="st4">
+  <!-- Chiều -->
+  <section class="step" id="stChieu">
     <div class="glass tilt">
-      <span class="tag">4 / 4</span>
+      <span class="tag" data-tag></span>
+      <h1>Buổi <span class="grad">chiều</span> đi đâu nè?</h1>
+      <p class="sub">Chọn nhiều cũng được.</p>
+      <div class="chips" data-key="chieu">
+        <button class="chip">🎬 Xem phim</button><button class="chip">☕ Quán cà phê Su hay đi</button>
+        <button class="chip">🌳 Đi dạo</button><button class="chip">🏞️ Đi Huế dạo phố</button>
+        <button class="chip">🎡 Khu vui chơi</button><button class="chip">📚 Cà phê Su học bài</button>
+        <button class="chip">💁 Chỗ Su hay đi</button><button class="chip">🍽️ Theo Su chọn</button>
+      </div>
+      <div class="err"></div>
+      <div class="nav"><button class="btn ghost" data-back>←</button><button class="btn" data-next>Tiếp tục</button></div>
+    </div>
+  </section>
+
+  <!-- Lời nhắn -->
+  <section class="step" id="stNote">
+    <div class="glass tilt">
+      <span class="tag" data-tag></span>
       <h1>Muốn <span class="grad">nhắn gì</span> không?</h1>
       <p class="sub">Có thể bỏ trống.</p>
       <div class="stack">
         <label>Tên<input type="text" id="name" value="Su iuu" readonly></label>
         <label>Lời nhắn<textarea id="note" placeholder="Có gì muốn nói thì ghi vào đây..."></textarea></label>
       </div>
-      <div class="err" id="e4"></div>
-      <div class="nav"><button class="btn ghost" data-go="3">←</button><button class="btn" id="send">Gửi</button></div>
+      <div class="err"></div>
+      <div class="nav"><button class="btn ghost" data-back>←</button><button class="btn" id="send">Gửi</button></div>
     </div>
   </section>
 
   <!-- 5: Xong -->
-  <section class="step" id="st5">
+  <section class="step" id="stDone">
     <div class="glass tilt">
       <svg class="ok" viewBox="0 0 110 110"><circle cx="55" cy="55" r="48"/><path d="M33 57l16 16 29-33"/></svg>
       <h1>Chốt <span class="grad">kèo</span> nhé!</h1>
@@ -242,16 +289,15 @@ input[type=date],input[type=time]{-webkit-appearance:none;appearance:none;min-wi
 <script>
 // 👉 DÁN LINK GOOGLE APPS SCRIPT (Web app URL) VÀO ĐÂY:
 const SHEET_URL = "https://script.google.com/macros/s/AKfycbxO5RUakMrMMovP_qSvhNMRqHt7aNaJPRRP86glT0GTk7hhHjl4wiEwkptUYcFr9Soa/exec";
-
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
 
 /* Tiêu đề hiện từng chữ */
 const t=$('#title');
-'Su iuu ơi, anh có plan này, Su duyệt nha'.split(' ').forEach((w,i)=>{
+'Plan mới của anh, Su iuu chọn nha!'.split(' ').forEach((w,i)=>{
   const s=document.createElement('span'); s.className='w'+(w.startsWith('Su')||w==='iuu?'?'':'');
   s.style.animationDelay=(.15+i*.12)+'s'; s.textContent=w;
-  if(i<2) s.classList.add('grad');
+  if(w==='Su'||w==='iuu') s.classList.add('grad');
   t.appendChild(s); t.appendChild(document.createTextNode(' '));
 });
 
@@ -263,6 +309,14 @@ for(let i=0;i<16;i++){
   s.style.opacity=.35+Math.random()*.4;
   s.style.animationDuration=(12+Math.random()*14)+'s'; s.style.animationDelay=(-Math.random()*20)+'s';
   fl.appendChild(s);
+}
+
+for(let i=0;i<26;i++){
+  const st=document.createElement('i'); st.className='star'; st.textContent='✦';
+  st.style.left=Math.random()*100+'%'; st.style.top=Math.random()*100+'%';
+  st.style.fontSize=(8+Math.random()*12)+'px';
+  st.style.animationDelay=(-Math.random()*3)+'s'; st.style.animationDuration=(2+Math.random()*3)+'s';
+  fl.appendChild(st);
 }
 
 /* Ánh sáng + vệt lấp lánh theo con trỏ */
@@ -329,58 +383,66 @@ function tick(){
 }
 
 /* Chuyển bước */
-let cur=0;
-function go(n){
-  const dir=n>=cur?'in-r':'in-l';
+const seq=()=>['st0','st1','stSang','stTrua','stChieu','stNote','stDone'];
+let cur='st0';
+function go(id){
+  const q=seq(), dir=q.indexOf(id)>=q.indexOf(cur)?'in-r':'in-l';
   $$('.step').forEach(s=>s.classList.remove('on','in-r','in-l'));
-  const el=$('#st'+n); el.classList.add('on',dir); cur=n;
-  $('#bar').style.width=(n/5*100)+'%';
-  $$('#st'+n+' .chip').forEach((c,i)=>c.style.animationDelay=(.1+i*.05)+'s');
+  const el=$('#'+id); el.classList.add('on',dir); cur=id;
+  const i=q.indexOf(id), tag=el.querySelector('[data-tag]');
+  if(tag) tag.textContent=`${i} / ${q.length-2}`;
+  $('#bar').style.width=(i/(q.length-1)*100)+'%';
+  el.querySelectorAll('.chip').forEach((c,k)=>c.style.animationDelay=(.1+k*.05)+'s');
   scrollTo(0,0);
 }
-function bad(id,msg){
-  const e=$(id); e.textContent=msg;
-  const g=e.closest('.glass'); g.classList.remove('shake'); void g.offsetWidth; g.classList.add('shake');
+function bad(el,msg){
+  const g=el.closest('.glass'), e=g.querySelector('.err'); e.textContent=msg;
+  g.classList.remove('shake'); void g.offsetWidth; g.classList.add('shake');
 }
-$('#start').addEventListener('click',e=>{const r=e.target.getBoundingClientRect();burst(r.left+r.width/2,r.top,70);go(1)});
-$$('[data-go]').forEach(b=>b.addEventListener('click',()=>go(+b.dataset.go)));
+const pick=k=>$$(`[data-key="${k}"] .sel`).map(b=>b.textContent.replace('✓','').trim()).join(', ');
+$('#start').addEventListener('click',e=>{const r=e.currentTarget.getBoundingClientRect();burst(r.left+r.width/2,r.top,70);go('st1')});
+$$('[data-back]').forEach(b=>b.addEventListener('click',()=>{const q=seq();go(q[q.indexOf(cur)-1])}));
 $$('[data-next]').forEach(b=>b.addEventListener('click',()=>{
-  const n=+b.dataset.next;
-  if(n===1&&!$('#date').value) return bad('#e1','Chọn ngày giúp mình nha.');
-  if(n===2&&!pick('place')) return bad('#e2','Chọn ít nhất 1 địa điểm nha.');
-  go(n+1);
+  const q=seq();
+  if(cur==='st1'){
+    if(!$('#date').value) return bad(b,'Chọn ngày giúp anh nha.');
+  }
+  const need={stSang:['sang','buổi sáng'],stTrua:['trua','buổi trưa'],stChieu:['chieu','buổi chiều']}[cur];
+  if(need&&!pick(need[0])) return bad(b,`Chọn ít nhất 1 lựa chọn cho ${need[1]} nha.`);
+  go(q[q.indexOf(cur)+1]);
 }));
 
 /* Chọn chip */
-const pick=k=>$$(`[data-key="${k}"] .sel`).map(b=>b.textContent.replace('✓','').trim()).join(', ');
 $$('.chips').forEach(g=>g.addEventListener('click',e=>{
   const b=e.target.closest('.chip'); if(!b) return;
   b.classList.toggle('sel');
   if(b.classList.contains('sel')){const r=b.getBoundingClientRect();burst(r.left+r.width/2,r.top+r.height/2,8)}
-  const n=g.querySelectorAll('.sel').length;
-  $('#c-'+g.dataset.key).textContent=n?`Đã chọn ${n}`:'';
-  $('#e2').textContent='';
+  g.closest('.glass').querySelector('.err').textContent='';
 }));
-$('#date').addEventListener('input',()=>$('#e1').textContent='');
+$('#date').addEventListener('input',e=>e.target.closest('.glass').querySelector('.err').textContent='');
 
 /* Gửi về Google Sheet */
 $('#send').addEventListener('click',async e=>{
-  const btn=e.currentTarget, err=$('#e4');
+  const btn=e.currentTarget;
   const data={
     thoi_gian_gui:new Date().toLocaleString('vi-VN'),
-    ten:'Su iuu', ngay:$('#date').value, gio:$('#time').value,
-    di_dau:pick('place'), an_gi:pick('food'), loi_nhan:$('#note').value.trim()
+    ten:'Su iuu', ngay:$('#date').value,
+    sang:pick('sang'), trua:pick('trua'), chieu:pick('chieu'),
+    loi_nhan:$('#note').value.trim()
   };
-  err.textContent=''; btn.disabled=true; btn.textContent='Đang gửi...';
+  btn.disabled=true; btn.textContent='Đang gửi...';
   try{
     if(SHEET_URL.startsWith('DAN_')) throw new Error('chua cau hinh');
     await fetch(SHEET_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(data)});
-    const L=[['Ngày giờ',`${data.ngay.split('-').reverse().join('/')} lúc ${data.gio}`],['Đi đâu',data.di_dau],['Ăn gì',data.an_gi||'Chưa chọn']];
+    const L=[['Ngày',data.ngay.split('-').reverse().join('/')]];
+    if(data.sang) L.push(['🌅 Sáng',data.sang]);
+    if(data.trua) L.push(['☀️ Trưa',data.trua]);
+    if(data.chieu) L.push(['🌇 Chiều',data.chieu]);
     $('#sum').innerHTML=L.map(([k,v])=>`<div><small>${k}</small>${v}</div>`).join('');
-    go(5); $('#bar').style.width='100%';
+    go('stDone'); $('#bar').style.width='100%';
     [0,250,500].forEach(d=>setTimeout(()=>burst(innerWidth*(.25+Math.random()*.5),innerHeight*.4,70),d));
   }catch(x){
-    btn.disabled=false; btn.textContent='Gửi'; bad('#e4','Gửi chưa được, thử lại nha.');
+    btn.disabled=false; btn.textContent='Gửi'; bad(btn,'Gửi chưa được, thử lại nha.');
   }
 });
 </script>
