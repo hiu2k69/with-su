@@ -303,14 +303,14 @@ box-shadow:0 8px 20px #ff4f9540;transition:transform .25s var(--ease)}
 
 <script>
 // 👉 DÁN LINK GOOGLE APPS SCRIPT (Web app URL) VÀO ĐÂY:
-const SHEET_URL = "https://script.google.com/macros/s/AKfycbxO5RUakMrMMovP_qSvhNMRqHt7aNaJPRRP86glT0GTk7hhHjl4wiEwkptUYcFr9Soa/exec";
+const SHEET_URL = "https://script.google.com/macros/s/AKfycbwKcxa7dn9umH2jvjkwrY5YIb93tTZSNRphp6pkyPES7tdnqOgs4OGE-a_kr5JepFDu/exec";
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
 
 /* Tiêu đề hiện từng chữ */
 const t=$('#title');
 'Plan mới của anh, Su iuu chọn nha!'.split(' ').forEach((w,i)=>{
-  const s=document.createElement('span'); s.className='w'+(w.startsWith('Su')||w==='iuu?'?'':'');
+  const s=document.createElement('span'); s.className='w';
   s.style.animationDelay=(.15+i*.12)+'s'; s.textContent=w;
   if(w==='Su'||w==='iuu') s.classList.add('grad');
   t.appendChild(s); t.appendChild(document.createTextNode(' '));
@@ -470,7 +470,15 @@ function bad(el,msg){
   const g=el.closest('.glass'), e=g.querySelector('.err'); e.textContent=msg;
   g.classList.remove('shake'); void g.offsetWidth; g.classList.add('shake');
 }
-const pick=k=>$$(`[data-key="${k}"] .sel`).map(b=>b.textContent.replace('✓','').trim()).join(', ');
+// Lấy đúng nội dung các lựa chọn đã bấm trong từng buổi.
+const pick = key => {
+  const group = document.querySelector(`[data-key="${key}"]`);
+  if (!group) return '';
+  return [...group.querySelectorAll('.chip.sel')]
+    .map(button => button.textContent.trim())
+    .filter(Boolean)
+    .join(', ');
+};
 $('#start').addEventListener('click',e=>{const r=e.currentTarget.getBoundingClientRect();burst(r.left+r.width/2,r.top,70);started=true;sfx.start();startMusic();go('st1')});
 $$('[data-back]').forEach(b=>b.addEventListener('click',()=>{sfx.back();const q=seq();go(q[q.indexOf(cur)-1])}));
 $$('[data-next]').forEach(b=>b.addEventListener('click',()=>{
@@ -494,28 +502,85 @@ $$('.chips').forEach(g=>g.addEventListener('click',e=>{
 }));
 $('#date').addEventListener('input',e=>e.target.closest('.glass').querySelector('.err').textContent='');
 
+// Tránh nội dung lời nhắn làm vỡ HTML phần tổng kết.
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, char => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[char]));
+}
+
 /* Gửi về Google Sheet */
-$('#send').addEventListener('click',async e=>{
-  const btn=e.currentTarget;
-  const data={
-    thoi_gian_gui:new Date().toLocaleString('vi-VN'),
-    ten:'Su iuu', ngay:$('#date').value,
-    sang:pick('sang'), trua:pick('trua'), chieu:pick('chieu'),
-    loi_nhan:$('#note').value.trim()
+$('#send').addEventListener('click', async e => {
+  const btn = e.currentTarget;
+  const errorBox = btn.closest('.glass').querySelector('.err');
+
+  // Đọc lại trực tiếp các nút đã chọn, không phụ thuộc nội dung giao diện khác.
+  const data = {
+    thoi_gian_gui: new Date().toLocaleString('vi-VN'),
+    ten: ($('#name')?.value || 'Su iuu').trim(),
+    ngay: $('#date').value,
+    sang: pick('sang'),
+    trua: pick('trua'),
+    chieu: pick('chieu'),
+    loi_nhan: $('#note').value.trim()
   };
-  btn.disabled=true; btn.textContent='Đang gửi...';
-  try{
-    if(SHEET_URL.startsWith('DAN_')) throw new Error('chua cau hinh');
-    await fetch(SHEET_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(data)});
-    const L=[['Ngày',data.ngay.split('-').reverse().join('/')]];
-    if(data.sang) L.push(['🌅 Sáng',data.sang]);
-    if(data.trua) L.push(['☀️ Trưa',data.trua]);
-    if(data.chieu) L.push(['🌇 Chiều',data.chieu]);
-    $('#sum').innerHTML=L.map(([k,v])=>`<div><small>${k}</small>${v}</div>`).join('');
-    go('stDone'); $('#bar').style.width='100%'; sfx.win();
-    [0,250,500].forEach(d=>setTimeout(()=>burst(innerWidth*(.25+Math.random()*.5),innerHeight*.4,70),d));
-  }catch(x){
-    btn.disabled=false; btn.textContent='Gửi'; bad(btn,'Gửi chưa được, thử lại nha.');
+
+  console.log('[Google Sheet] Dữ liệu chuẩn bị gửi:', data);
+
+  if (!SHEET_URL || !SHEET_URL.includes('/exec')) {
+    return bad(btn, 'Link Apps Script chưa đúng.');
+  }
+  if (!data.ngay) return bad(btn, 'Bạn chưa chọn ngày.');
+  if (!data.sang || !data.trua || !data.chieu) {
+    return bad(btn, 'Vui lòng chọn ít nhất 1 mục cho Sáng, Trưa và Chiều.');
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Đang gửi...';
+  errorBox.textContent = '';
+
+  try {
+    // Apps Script nhận JSON ở e.postData.contents.
+    // Dùng text/plain để tránh CORS preflight; no-cors không đọc được response.
+    await fetch(SHEET_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(data)
+    });
+
+    const dateText = data.ngay.split('-').reverse().join('/');
+    const rows = [
+      ['Ngày', dateText],
+      ['🌅 Sáng', data.sang],
+      ['☀️ Trưa', data.trua],
+      ['🌇 Chiều', data.chieu]
+    ];
+    if (data.loi_nhan) rows.push(['💌 Lời nhắn', data.loi_nhan]);
+
+    $('#sum').innerHTML = rows.map(([label, value]) =>
+      `<div><small>${label}</small>${escapeHtml(value)}</div>`
+    ).join('');
+
+    // no-cors chỉ xác nhận request đã được trình duyệt gửi đi,
+    // không thể chứng minh Google Sheet đã ghi thành công.
+    const status = document.createElement('p');
+    status.style.cssText = 'margin-top:12px;font-size:12px;color:#a05a7b';
+    status.textContent = 'Đã gửi yêu cầu. Hãy kiểm tra Google Sheet để xác nhận dữ liệu đã được lưu.';
+    $('#sum').appendChild(status);
+
+    go('stDone');
+    $('#bar').style.width = '100%';
+    sfx.win();
+    [0, 250, 500].forEach(delay => setTimeout(() =>
+      burst(innerWidth * (.25 + Math.random() * .5), innerHeight * .4, 70), delay
+    ));
+  } catch (err) {
+    console.error('[Google Sheet] Lỗi gửi request:', err);
+    btn.disabled = false;
+    btn.textContent = 'Gửi';
+    bad(btn, 'Không gửi được. Kiểm tra mạng và thử lại nhé.');
   }
 });
 </script>
